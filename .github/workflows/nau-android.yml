@@ -123,10 +123,11 @@ jobs:
           b='    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
           grep -qxF "$a" "$f"
           grep -qxF "$b" "$f"
+          # hbb_common is edition 2018: use vec![..].into_iter() (array into_iter yields references there)
           # approve-mode=click: the tablet taps [Accept], no password (forced, cannot be changed in the app)
-          sed -i 's|^    pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = Default::default();$|    pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new([("approve-mode".to_owned(), "click".to_owned())].into_iter().collect());|' "$f"
+          sed -i 's|^    pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = Default::default();$|    pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(vec![("approve-mode".to_owned(), "click".to_owned())].into_iter().collect());|' "$f"
           # enable-check-update=N: no "download new version" banner (GitHub builds cannot update ours)
-          sed -i 's|^    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();$|    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new([("enable-check-update".to_owned(), "N".to_owned())].into_iter().collect());|' "$f"
+          sed -i 's|^    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();$|    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(vec![("enable-check-update".to_owned(), "N".to_owned())].into_iter().collect());|' "$f"
           grep -n 'OVERWRITE_SETTINGS: \|DEFAULT_LOCAL_SETTINGS: ' "$f"
           grep -q '"approve-mode".to_owned(), "click"' "$f"
           grep -q '"enable-check-update".to_owned(), "N"' "$f"
