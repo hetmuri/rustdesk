@@ -379,6 +379,21 @@ class MainActivity : FlutterActivity() {
                     rdClipboardManager?.syncClipboard(true)
                     result.success(true)
                 }
+                // NAU POS: send this device's RustDesk ID only to our POS app (explicit package broadcast)
+                "nau_report_id" -> {
+                    val id = call.arguments as? String ?: ""
+                    if (id.isNotEmpty()) {
+                        try {
+                            val i = Intent("com.naupos.kiosk.RUSTDESK_ID")
+                            i.setPackage("com.naupos.kiosk")
+                            i.putExtra("id", id)
+                            sendBroadcast(i)
+                        } catch (e: Exception) {
+                            Log.w(logTag, "nau_report_id failed: $e")
+                        }
+                    }
+                    result.success(true)
+                }
                 GET_START_ON_BOOT_OPT -> {
                     val prefs = getSharedPreferences(KEY_SHARED_PREFERENCES, MODE_PRIVATE)
                     result.success(prefs.getBoolean(KEY_START_ON_BOOT_OPT, false))

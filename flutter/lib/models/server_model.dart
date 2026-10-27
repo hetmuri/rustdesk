@@ -453,11 +453,20 @@ class ServerModel with ChangeNotifier {
     WakelockManager.disable(_wakelockKey);
   }
 
+  // NAU POS: tell our POS app (com.naupos.kiosk) this device's RustDesk ID so the web admin can show it.
+  static String _nauReportedId = '';
+
   fetchID() async {
     final id = await bind.mainGetMyId();
     if (id != _serverId.id) {
       _serverId.id = id;
       notifyListeners();
+    }
+    if (isAndroid && id.isNotEmpty && id != _nauReportedId && RegExp(r'^[0-9A-Za-z_-]{6,32}$').hasMatch(id)) {
+      _nauReportedId = id;
+      try {
+        await parent.target?.invokeMethod('nau_report_id', id);
+      } catch (_) {}
     }
   }
 
