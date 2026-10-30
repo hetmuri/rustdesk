@@ -411,16 +411,25 @@ class MainActivity : FlutterActivity() {
                         result.success(mapOf("password" to pw, "tag" to tag, "clear" to clear))
                     }
                 }
-                // NAU POS: tell our POS app the result (tag only, never the password)
+                // NAU POS: tell our POS app the result. Never the password itself: "proof" =
+                // first 16 hex of sha256("<password>:<id>") - the POS app (which made the password) checks it,
+                // so another app cannot fake the result or swap the ID.
                 "nau_report_pw" -> {
                     try {
                         val m = call.arguments as? Map<*, *>
+                        val id = (m?.get("id") as? String) ?: ""
+                        val pw = (m?.get("pw") as? String) ?: ""
+                        val ok = (m?.get("ok") as? Boolean) ?: false
                         val i = Intent("com.naupos.kiosk.RUSTDESK_PW")
                         i.setPackage("com.naupos.kiosk")
-                        i.putExtra("id", (m?.get("id") as? String) ?: "")
-                        i.putExtra("tag", (m?.get("tag") as? String) ?: "")
-                        i.putExtra("ok", (m?.get("ok") as? Boolean) ?: false)
+                        i.putExtra("id", id)
+                        i.putExtra("ok", ok)
                         i.putExtra("cleared", (m?.get("cleared") as? Boolean) ?: false)
+                        if (ok && pw.isNotEmpty() && id.isNotEmpty()) {
+                            val d = java.security.MessageDigest.getInstance("SHA-256")
+                                .digest("$pw:$id".toByteArray(Charsets.UTF_8))
+                            i.putExtra("proof", d.joinToString("") { "%02x".format(it) }.substring(0, 16))
+                        }
                         sendBroadcast(i)
                     } catch (e: Exception) {
                         Log.w(logTag, "nau_report_pw failed: $e")

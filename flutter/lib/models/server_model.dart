@@ -475,16 +475,16 @@ class ServerModel with ChangeNotifier {
   // Password set -> only the permanent password is accepted (plus click-to-accept on the tablet).
   // Cleared -> no password access, the tablet must tap [Accept].
   Future<void> _nauApplyPending(String id) async {
+    if (id.isEmpty) return; // wait until the ID is known (the result is bound to it)
     try {
       final p = await parent.target?.invokeMethodWithResult<Map>('nau_take_pending');
       if (p is! Map) return;
       final pw = '${p['password'] ?? ''}';
-      final tag = '${p['tag'] ?? ''}';
       if (p['clear'] == true) {
         final ok = await bind.mainSetPermanentPasswordWithResult(password: '');
         await updatePasswordModel();
         await parent.target?.invokeMethod(
-            'nau_report_pw', {'id': id, 'tag': '', 'ok': ok, 'cleared': true});
+            'nau_report_pw', {'id': id, 'pw': '', 'ok': ok, 'cleared': true});
         return;
       }
       if (pw.isEmpty) return;
@@ -494,8 +494,9 @@ class ServerModel with ChangeNotifier {
             key: kOptionVerificationMethod, value: 'use-permanent-password');
       }
       await updatePasswordModel();
+      // pw goes only to our own Kotlin side, which sends a proof (hash with the ID), not the password
       await parent.target?.invokeMethod(
-          'nau_report_pw', {'id': id, 'tag': tag, 'ok': ok, 'cleared': false});
+          'nau_report_pw', {'id': id, 'pw': pw, 'ok': ok, 'cleared': false});
     } catch (e) {
       debugPrint('nau apply pending failed: $e');
     }
