@@ -129,11 +129,14 @@ jobs:
           # enable-check-update=N: no "download new version" banner (GitHub builds cannot update ours)
           # floating window: transparency 0 + untouchable + smallest size = invisible, but still keeps the service alive
           #   (FloatingWindowService.kt: "0 means invisible but can help prevent the service from being killed")
-          sed -i 's|^    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();$|    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(vec![("enable-check-update".to_owned(), "N".to_owned()), ("floating-window-transparency".to_owned(), "0".to_owned()), ("floating-window-untouchable".to_owned(), "Y".to_owned()), ("floating-window-size".to_owned(), "32".to_owned())].into_iter().collect());|' "$f"
+          # show-scam-warning=N: no scam warning dialog (scam.png, 10 s wait) before Start service / Screen Capture
+          #   (server_page.dart: shown only when mainGetLocalOption("show-scam-warning") != "N")
+          sed -i 's|^    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();$|    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(vec![("enable-check-update".to_owned(), "N".to_owned()), ("floating-window-transparency".to_owned(), "0".to_owned()), ("floating-window-untouchable".to_owned(), "Y".to_owned()), ("floating-window-size".to_owned(), "32".to_owned()), ("show-scam-warning".to_owned(), "N".to_owned())].into_iter().collect());|' "$f"
           grep -n 'OVERWRITE_SETTINGS: \|DEFAULT_LOCAL_SETTINGS: ' "$f"
           grep -q '"approve-mode".to_owned(), "click"' "$f"
           grep -q '"enable-check-update".to_owned(), "N"' "$f"
           grep -q '"floating-window-transparency".to_owned(), "0"' "$f"
+          grep -q '"show-scam-warning".to_owned(), "N"' "$f"
 
       - name: Install flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
