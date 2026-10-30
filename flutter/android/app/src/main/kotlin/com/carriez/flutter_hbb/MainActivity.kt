@@ -394,6 +394,39 @@ class MainActivity : FlutterActivity() {
                     }
                     result.success(true)
                 }
+                // NAU POS: take the pending password/clear request (set by NauSetupReceiver) - once
+                "nau_take_pending" -> {
+                    val prefs = getSharedPreferences(KEY_SHARED_PREFERENCES, MODE_PRIVATE)
+                    val pw = prefs.getString(NauSetupReceiver.KEY_PW, "") ?: ""
+                    val tag = prefs.getString(NauSetupReceiver.KEY_TAG, "") ?: ""
+                    val clear = prefs.getBoolean(NauSetupReceiver.KEY_CLEAR, false)
+                    if (pw.isEmpty() && !clear) {
+                        result.success(null)
+                    } else {
+                        prefs.edit()
+                            .remove(NauSetupReceiver.KEY_PW)
+                            .remove(NauSetupReceiver.KEY_TAG)
+                            .remove(NauSetupReceiver.KEY_CLEAR)
+                            .apply()
+                        result.success(mapOf("password" to pw, "tag" to tag, "clear" to clear))
+                    }
+                }
+                // NAU POS: tell our POS app the result (tag only, never the password)
+                "nau_report_pw" -> {
+                    try {
+                        val m = call.arguments as? Map<*, *>
+                        val i = Intent("com.naupos.kiosk.RUSTDESK_PW")
+                        i.setPackage("com.naupos.kiosk")
+                        i.putExtra("id", (m?.get("id") as? String) ?: "")
+                        i.putExtra("tag", (m?.get("tag") as? String) ?: "")
+                        i.putExtra("ok", (m?.get("ok") as? Boolean) ?: false)
+                        i.putExtra("cleared", (m?.get("cleared") as? Boolean) ?: false)
+                        sendBroadcast(i)
+                    } catch (e: Exception) {
+                        Log.w(logTag, "nau_report_pw failed: $e")
+                    }
+                    result.success(true)
+                }
                 GET_START_ON_BOOT_OPT -> {
                     val prefs = getSharedPreferences(KEY_SHARED_PREFERENCES, MODE_PRIVATE)
                     result.success(prefs.getBoolean(KEY_START_ON_BOOT_OPT, false))

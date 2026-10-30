@@ -468,6 +468,37 @@ class ServerModel with ChangeNotifier {
         await parent.target?.invokeMethod('nau_report_id', id);
       } catch (_) {}
     }
+    if (isAndroid) await _nauApplyPending(id);
+  }
+
+  // NAU POS: apply the permanent password (or clear it) that the NAU POS app sent (NauSetupReceiver).
+  // Password set -> only the permanent password is accepted (plus click-to-accept on the tablet).
+  // Cleared -> no password access, the tablet must tap [Accept].
+  Future<void> _nauApplyPending(String id) async {
+    try {
+      final p = await parent.target?.invokeMethodWithResult<Map>('nau_take_pending');
+      if (p is! Map) return;
+      final pw = '${p['password'] ?? ''}';
+      final tag = '${p['tag'] ?? ''}';
+      if (p['clear'] == true) {
+        final ok = await bind.mainSetPermanentPasswordWithResult(password: '');
+        await updatePasswordModel();
+        await parent.target?.invokeMethod(
+            'nau_report_pw', {'id': id, 'tag': '', 'ok': ok, 'cleared': true});
+        return;
+      }
+      if (pw.isEmpty) return;
+      final ok = await bind.mainSetPermanentPasswordWithResult(password: pw);
+      if (ok) {
+        await bind.mainSetOption(
+            key: kOptionVerificationMethod, value: 'use-permanent-password');
+      }
+      await updatePasswordModel();
+      await parent.target?.invokeMethod(
+          'nau_report_pw', {'id': id, 'tag': tag, 'ok': ok, 'cleared': false});
+    } catch (e) {
+      debugPrint('nau apply pending failed: $e');
+    }
   }
 
   changeStatue(String name, bool value) {

@@ -124,8 +124,8 @@ jobs:
           grep -qxF "$a" "$f"
           grep -qxF "$b" "$f"
           # hbb_common is edition 2018: use vec![..].into_iter() (array into_iter yields references there)
-          # approve-mode=click: the tablet taps [Accept], no password (forced, cannot be changed in the app)
-          sed -i 's|^    pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = Default::default();$|    pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(vec![("approve-mode".to_owned(), "click".to_owned())].into_iter().collect());|' "$f"
+          # approve-mode: not forced any more (2026-10-30). Default = Both: permanent password (set by the NAU POS app
+          #   through NauSetupReceiver) connects without the tablet; without the password the tablet taps [Accept].
           # enable-check-update=N: no "download new version" banner (GitHub builds cannot update ours)
           # floating window: transparency 0 + untouchable + smallest size = invisible, but still keeps the service alive
           #   (FloatingWindowService.kt: "0 means invisible but can help prevent the service from being killed")
@@ -133,7 +133,6 @@ jobs:
           #   (server_page.dart: shown only when mainGetLocalOption("show-scam-warning") != "N")
           sed -i 's|^    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();$|    pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(vec![("enable-check-update".to_owned(), "N".to_owned()), ("floating-window-transparency".to_owned(), "0".to_owned()), ("floating-window-untouchable".to_owned(), "Y".to_owned()), ("floating-window-size".to_owned(), "32".to_owned()), ("show-scam-warning".to_owned(), "N".to_owned())].into_iter().collect());|' "$f"
           grep -n 'OVERWRITE_SETTINGS: \|DEFAULT_LOCAL_SETTINGS: ' "$f"
-          grep -q '"approve-mode".to_owned(), "click"' "$f"
           grep -q '"enable-check-update".to_owned(), "N"' "$f"
           grep -q '"floating-window-transparency".to_owned(), "0"' "$f"
           grep -q '"show-scam-warning".to_owned(), "N"' "$f"

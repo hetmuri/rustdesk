@@ -45,6 +45,18 @@
             </intent-filter>
         </receiver>
 
+        <!-- NAU POS: only the NAU POS app (holds com.naupos.kiosk.permission.REMOTE_SETUP, signature
+             permission declared by com.naupos.kiosk) can set or clear the permanent password. -->
+        <receiver
+            android:name=".NauSetupReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="com.naupos.kiosk.permission.REMOTE_SETUP">
+            <intent-filter>
+                <action android:name="com.carriez.flutter_hbb.NAU_REMOTE_SETUP" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".InputService"
             android:enabled="true"
